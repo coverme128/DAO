@@ -66,3 +66,4 @@ export const useChatStore = create<ChatState & ChatActions>((set) => ({
   clearMessages: () => set({ messages: [] }),
 }));
 
+

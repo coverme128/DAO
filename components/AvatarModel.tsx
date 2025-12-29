@@ -57,3 +57,4 @@ export default function AvatarModel({ state }: AvatarModelProps) {
   );
 }
 
+

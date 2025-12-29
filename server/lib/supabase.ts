@@ -27,3 +27,4 @@ export const createSupabaseClient = (accessToken?: string) => {
   return client;
 };
 
+

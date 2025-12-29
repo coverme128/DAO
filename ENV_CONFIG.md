@@ -116,8 +116,6 @@ cp env.example .env.local
   1. 登录 Stripe Dashboard
   2. 进入 "Developers" > "API keys"
   3. 复制 "Secret key"（测试环境使用 `sk_test_...`，生产环境使用 `sk_live_...`）
-- **示例（测试）**：`sk_test_51AbCdEfGhIjKlMnOpQrStUvWxYz...`
-- **示例（生产）**：`sk_live_51AbCdEfGhIjKlMnOpQrStUvWxYz...`
 - **⚠️ 安全提示**：仅用于后端，不要暴露给前端
 - **用途**：创建支付会话、处理 Webhook
 
@@ -379,4 +377,5 @@ npm run dev:frontend
 ```
 
 如果看到服务正常启动且没有配置错误提示，说明环境变量配置成功！
+
 
