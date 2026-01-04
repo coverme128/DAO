@@ -1,10 +1,52 @@
+// Load environment variables FIRST, before any other imports
+import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
+
+// Get project root - try multiple methods
+let projectRoot = process.cwd();
+
+// If cwd ends with 'server', go up one level
+if (projectRoot.endsWith('server') || projectRoot.endsWith('server/')) {
+  projectRoot = path.resolve(projectRoot, '..');
+}
+
+const envLocalPath = path.resolve(projectRoot, '.env.local');
+const envPath = path.resolve(projectRoot, '.env');
+
+// Debug: Log paths and loading status
+console.log('📁 process.cwd():', process.cwd());
+console.log('📁 Project root:', projectRoot);
+console.log('📄 .env.local path:', envLocalPath);
+console.log('📄 File exists:', fs.existsSync(envLocalPath));
+
+const envLocalResult = dotenv.config({ path: envLocalPath });
+if (envLocalResult.error) {
+  console.warn('⚠️  Warning: Could not load .env.local:', envLocalResult.error.message);
+} else {
+  console.log('✅ Loaded .env.local');
+  if (envLocalResult.parsed) {
+    console.log('   Found', Object.keys(envLocalResult.parsed).length, 'variables');
+  }
+}
+
+const envResult = dotenv.config({ path: envPath, override: false });
+if (envResult.error && envResult.error.code !== 'ENOENT') {
+  console.warn('⚠️  Warning: Could not load .env:', envResult.error.message);
+}
+
+// Verify critical environment variables
+console.log('🔍 Verifying environment variables...');
+console.log('   SUPABASE_URL:', process.env.SUPABASE_URL ? '✓' : '✗');
+console.log('   SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✓ (' + process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 20) + '...)' : '✗');
+
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('❌ Missing required environment variables!');
+}
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { createServer } from 'http';
-
-// Load environment variables
-dotenv.config();
 
 import asrRoutes from './routes/asr';
 import chatRoutes from './routes/chat';

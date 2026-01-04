@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useChatStore } from '@/lib/store/chat-store';
 import { api } from '@/lib/config';
 
@@ -10,7 +11,7 @@ interface SettingsDrawerProps {
 }
 
 export default function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
-  const { userId } = useChatStore();
+  const { userId, usage } = useChatStore();
   const [activeTab, setActiveTab] = useState<'voice-input' | 'voice-output' | 'memory' | 'safety' | 'account'>('voice-input');
   const [memorySummary, setMemorySummary] = useState<string>('');
 
@@ -213,11 +214,21 @@ export default function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps)
                   Subscription
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Current plan: Free
+                  Current plan: {usage?.plan || 'Free'}
                 </p>
-                <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                  Upgrade to Pro
-                </button>
+                {usage?.plan === 'FREE' ? (
+                  <Link
+                    href="/pricing"
+                    className="inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                    onClick={onClose}
+                  >
+                    Upgrade to Pro
+                  </Link>
+                ) : (
+                  <p className="text-sm text-green-600 dark:text-green-400">
+                    ✓ You're on Pro plan
+                  </p>
+                )}
               </div>
               <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
                 <button className="px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">

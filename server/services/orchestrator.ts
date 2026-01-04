@@ -2,7 +2,6 @@ import { memoryService } from './memory';
 import { sessionService } from './session';
 import { billingService } from './billing';
 import type { Plan } from './billing';
-import { AzureOpenAI } from '@azure/openai';
 
 export interface ChatRequest {
   userId: string;
@@ -30,9 +29,9 @@ export interface TTSResult {
 }
 
 export class OrchestratorService {
-  private openAIClient: AzureOpenAI | null = null;
+  private openAIClient: any = null;
 
-  private getOpenAIClient(): AzureOpenAI {
+  private async getOpenAIClient(): Promise<any> {
     if (this.openAIClient) {
       return this.openAIClient;
     }
@@ -45,9 +44,31 @@ export class OrchestratorService {
       throw new Error('Azure OpenAI configuration is missing. Please set AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY, and AZURE_OPENAI_DEPLOYMENT_NAME');
     }
 
-    this.openAIClient = new AzureOpenAI({
-      endpoint,
+    // Azure OpenAI v2.0+ uses 'openai' package, not '@azure/openai'
+    // Use dynamic import for ESM compatibility
+    let AzureOpenAIClass: any;
+    
+    try {
+      // Import from 'openai' package (v2.0+)
+      const openaiMod = await import('openai');
+      AzureOpenAIClass = openaiMod.AzureOpenAI;
+    } catch (importError: any) {
+      console.error('Failed to import Azure OpenAI:', importError);
+      throw new Error(`Failed to import AzureOpenAI: ${importError.message}. Please ensure 'openai' package is installed: npm install openai`);
+    }
+    
+    if (!AzureOpenAIClass || typeof AzureOpenAIClass !== 'function') {
+      throw new Error(`AzureOpenAI is not a constructor. Please install the 'openai' package: npm install openai`);
+    }
+    
+    // Azure OpenAI client configuration
+    // The 'openai' package uses baseURL and apiVersion for Azure
+    const apiVersion = process.env.AZURE_OPENAI_API_VERSION || '2024-10-21';
+    
+    this.openAIClient = new AzureOpenAIClass({
+      baseURL: `${endpoint.replace(/\/$/, '')}/openai/deployments/${deploymentName}`,
       apiKey,
+      apiVersion,
     });
 
     return this.openAIClient;
@@ -150,7 +171,7 @@ Keep responses conversational and natural.`;
 
   private async callLLM(messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>): Promise<string> {
     try {
-      const client = this.getOpenAIClient();
+      const client = await this.getOpenAIClient();
       const deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT_NAME!;
 
       // Convert messages to Azure OpenAI format
@@ -163,7 +184,7 @@ Keep responses conversational and natural.`;
         model: deploymentName,
         messages: azureMessages,
         temperature: 0.7,
-        maxTokens: 500,
+        max_tokens: 500, // Azure OpenAI uses max_tokens, not maxTokens
       });
 
       const assistantMessage = response.choices[0]?.message?.content || '';

@@ -1,13 +1,58 @@
 'use client';
 
-import { Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
+import { Suspense, useState, useEffect } from 'react';
 import { useChatStore } from '@/lib/store/chat-store';
-import AvatarModel from './AvatarModel';
+
+// Lazy load Three.js components only on client
+let Canvas: any;
+let OrbitControls: any;
+let PerspectiveCamera: any;
+let AvatarModel: any;
 
 export default function Avatar() {
   const { avatarState } = useChatStore();
+  const [isMounted, setIsMounted] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    
+    // Dynamically import Three.js components only on client
+    if (typeof window !== 'undefined') {
+      Promise.all([
+        import('@react-three/fiber').then((mod) => { Canvas = mod.Canvas; }),
+        import('@react-three/drei').then((mod) => {
+          OrbitControls = mod.OrbitControls;
+          PerspectiveCamera = mod.PerspectiveCamera;
+        }),
+        import('./AvatarModel').then((mod) => { AvatarModel = mod.default; }),
+      ]).then(() => {
+        setIsLoaded(true);
+      }).catch((error) => {
+        console.error('Failed to load Three.js components:', error);
+      });
+    }
+  }, []);
+
+  if (!isMounted || !isLoaded) {
+    return (
+      <div className="relative w-full h-full bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="flex items-center justify-center h-full">
+          <div className="text-gray-500 dark:text-gray-400">Loading Avatar...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!Canvas || !AvatarModel) {
+    return (
+      <div className="relative w-full h-full bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="flex items-center justify-center h-full">
+          <div className="text-gray-500 dark:text-gray-400">Avatar unavailable</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-full bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">

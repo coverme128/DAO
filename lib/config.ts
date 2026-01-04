@@ -14,6 +14,7 @@ export const api = {
   memory: `${API_BASE_URL}/api/memory`,
   stripe: {
     webhook: `${API_BASE_URL}/api/stripe/webhook`,
+    checkout: `${API_BASE_URL}/api/stripe/checkout`,
   },
 };
 
